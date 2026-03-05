@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>野球盤 Ver4.0</title>
+<title>野球盤 Ver7.0</title>
 <style>
 body{
     margin:0;
@@ -24,7 +24,7 @@ canvas{
 </head>
 <body>
 
-<h2>トップビュー野球盤 Ver4.0</h2>
+<h2>トップビュー野球盤 Ver7.0</h2>
 <canvas id="game" width="600" height="700"></canvas>
 
 <div id="info">
@@ -48,7 +48,7 @@ let outs=0;
 
 let isRightHand=true;
 
-let homePlate={x:300,y:620};
+let homePlate={x:300,y:620,size:40};
 let batter={x:260,y:620};
 let pitcher={x:300,y:250};
 
@@ -62,45 +62,118 @@ let state="wait";
 let batAngle=0;
 let swinging=false;
 
+// ===== 外野イベント =====
+let outfieldEvents=[];
+
+function generateOutfieldEvents(){
+    outfieldEvents=[];
+    const types=["double","triple","homerun"];
+    types.sort(()=>Math.random()-0.5);
+
+    let zones=[];
+    while(zones.length<3){
+        let r=Math.floor(Math.random()*5);
+        if(!zones.includes(r)){
+            zones.push(r);
+        }
+    }
+
+    for(let i=0;i<3;i++){
+        outfieldEvents.push({
+            zone:zones[i],
+            type:types[i]
+        });
+    }
+}
+
 function updateBatterPosition(){
     if(isRightHand){
-        batter.x=homePlate.x-40;
+        batter.x=homePlate.x-50;
     }else{
-        batter.x=homePlate.x+40;
+        batter.x=homePlate.x+50;
     }
     batter.y=homePlate.y;
 }
 
+// ===== 3:1 ピッチ =====
 function newPitch(){
+    let isStrike=Math.random()<0.75;
+    let x;
+
+    if(isStrike){
+        x=homePlate.x+(Math.random()*30-15);
+    }else{
+        x=homePlate.x+(Math.random()*200-100);
+        if(Math.abs(x-homePlate.x)<homePlate.size/2){
+            x+=120;
+        }
+    }
+
     ball={
-        x:300+(Math.random()*60-30),
+        x:x,
         y:300,
         vx:0,
         vy:4
     };
     state="pitch";
 }
+
+generateOutfieldEvents();
 newPitch();
 
 function draw(){
     ctx.clearRect(0,0,600,700);
+
+    // ===== 外野イベント可視化 =====
+    let zoneWidth=canvas.width/5;
+
+    for(let i=0;i<5;i++){
+
+        let event=outfieldEvents.find(e=>e.zone===i);
+
+        if(event){
+            if(event.type==="double") ctx.fillStyle="rgba(0,0,255,0.25)";
+            if(event.type==="triple") ctx.fillStyle="rgba(0,255,0,0.25)";
+            if(event.type==="homerun") ctx.fillStyle="rgba(255,0,0,0.25)";
+        }else{
+            ctx.fillStyle="rgba(255,255,255,0.08)";
+        }
+
+        ctx.fillRect(i*zoneWidth,0,zoneWidth,150);
+
+        ctx.strokeStyle="rgba(255,255,255,0.3)";
+        ctx.strokeRect(i*zoneWidth,0,zoneWidth,150);
+
+        if(event){
+            ctx.fillStyle="white";
+            ctx.font="14px sans-serif";
+            ctx.textAlign="center";
+            ctx.fillText(
+                event.type.toUpperCase(),
+                i*zoneWidth+zoneWidth/2,
+                30
+            );
+        }
+    }
+
     ctx.fillStyle="#2faa2f";
-    ctx.fillRect(0,0,600,700);
+    ctx.fillRect(0,150,600,550);
 
     ctx.strokeStyle="white";
     ctx.lineWidth=3;
     ctx.beginPath();
     ctx.moveTo(homePlate.x,homePlate.y);
-    ctx.lineTo(-200,0);
+    ctx.lineTo(-200,150);
     ctx.moveTo(homePlate.x,homePlate.y);
-    ctx.lineTo(800,0);
+    ctx.lineTo(800,150);
     ctx.stroke();
 
     ctx.fillStyle="white";
     ctx.save();
     ctx.translate(homePlate.x,homePlate.y);
     ctx.rotate(Math.PI/4);
-    ctx.fillRect(-10,-10,20,20);
+    ctx.fillRect(-homePlate.size/2,-homePlate.size/2,
+                 homePlate.size,homePlate.size);
     ctx.restore();
 
     ctx.fillStyle="blue";
@@ -117,7 +190,7 @@ function draw(){
     ctx.translate(batter.x,batter.y);
     ctx.rotate(batAngle);
     ctx.fillStyle="brown";
-    ctx.fillRect(-60,-4,60,8);
+    ctx.fillRect(0,-4,60,8);
     ctx.restore();
 
     ctx.fillStyle="red";
@@ -136,14 +209,23 @@ function draw(){
 }
 
 function update(){
+
     if(state==="pitch"){
         ball.y+=ball.vy;
 
-        if(ball.y>680){
-            // 見逃し
-            strikes++;
-            if(strikes>=3){
-                addOut();
+        if(ball.y>=homePlate.y){
+            if(Math.abs(ball.x-homePlate.x)>homePlate.size/2){
+                balls++;
+                if(balls>=4){
+                    score++;
+                    resetCount();
+                    generateOutfieldEvents();
+                }
+            }else{
+                strikes++;
+                if(strikes>=3){
+                    addOut();
+                }
             }
             endPitch();
         }
@@ -153,18 +235,6 @@ function update(){
         ball.x+=ball.vx;
         ball.y+=ball.vy;
 
-        // 外野奥に到達したらヒット
-        if(ball.y<100){
-            score++;
-            if(score>bestScore)bestScore=score;
-            resetCount();
-            isRightHand=!isRightHand;
-            updateBatterPosition();
-            endPitch();
-            return;
-        }
-
-        // 守備に当たったらアウト
         for(let f of fielders){
             let dx=ball.x-f.x;
             let dy=ball.y-f.y;
@@ -174,21 +244,41 @@ function update(){
                 return;
             }
         }
+
+        if(ball.y<150){
+
+            let zoneWidth=canvas.width/5;
+            let zoneIndex=Math.floor(ball.x/zoneWidth);
+
+            let found=outfieldEvents.find(e=>e.zone===zoneIndex);
+
+            if(found){
+                if(found.type==="double") score+=2;
+                if(found.type==="triple") score+=3;
+                if(found.type==="homerun") score=score>0?score*2:2;
+            }else{
+                score+=1;
+            }
+
+            if(score>bestScore){
+                bestScore=score;
+            }
+
+            resetCount();
+            generateOutfieldEvents();
+            endPitch();
+        }
     }
 
     if(swinging){
         if(isRightHand){
             batAngle-=0.35;
-            if(batAngle<=-Math.PI*2){
-                swinging=false;
-                batAngle=0;
-            }
         }else{
             batAngle+=0.35;
-            if(batAngle>=Math.PI*2){
-                swinging=false;
-                batAngle=0;
-            }
+        }
+        if(Math.abs(batAngle)>=Math.PI*2){
+            swinging=false;
+            batAngle=0;
         }
     }
 }
@@ -201,10 +291,8 @@ function swing(){
        Math.abs(ball.x-batter.x)<70){
 
         state="hit";
-        let angle=(Math.random()*Math.PI/2)+(Math.PI/4);
-        let power=7+Math.random()*3;
-        ball.vx=power*Math.cos(angle)*(ball.x<300?-1:1);
-        ball.vy=-power*Math.sin(angle);
+        ball.vx=(isRightHand?-5:5);
+        ball.vy=-6;
     }else{
         strikes++;
         if(strikes>=3){
@@ -217,6 +305,8 @@ function swing(){
 function addOut(){
     outs++;
     resetCount();
+    generateOutfieldEvents();
+
     if(outs>=3){
         score=0;
         outs=0;
