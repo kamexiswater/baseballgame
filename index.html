@@ -1,1 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ミニ プロスピ風 野球盤</title>
+<style>
+body{
+    margin:0;
+    background:#0b1d2a;
+    color:white;
+    font-family:Arial, Helvetica, sans-serif;
+    text-align:center;
+}
+h1{
+    margin:10px 0;
+}
+#game{
+    width:800px;
+    margin:0 auto;
+}
+#field{
+    position:relative;
+    width:600px;
+    height:400px;
+    margin:0 auto;
+    background:linear-gradient(#1f7a1f,#145214);
+    border-radius:50% 50% 0 0;
+    overflow:hidden;
+}
+.base{
+    width:20px;
+    height:20px;
+    background:white;
+    position:absolute;
+    transform:rotate(45deg);
+}
+#first{ right:150px; bottom:120px; }
+#second{ left:290px; top:80px; }
+#third{ left:150px; bottom:120px; }
+#home{ left:290px; bottom:40px; }
 
+#pitchZone{
+    margin:20px auto;
+    width:400px;
+    height:20px;
+    background:#444;
+    position:relative;
+}
+#marker{
+    width:10px;
+    height:20px;
+    background:yellow;
+    position:absolute;
+    left:0;
+}
+#sweetSpot{
+    position:absolute;
+    left:180px;
+    width:40px;
+    height:20px;
+    background:red;
+    opacity:0.5;
+}
+
+button{
+    padding:10px 30px;
+    font-size:18px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+#log{
+    margin-top:10px;
+    min-height:40px;
+}
+
+#scoreboard{
+    margin-top:10px;
+    font-size:20px;
+}
+</style>
+</head>
+<body>
+
+<h1>ミニ プロスピ風 野球盤</h1>
+
+<div id="game">
+    <div id="field">
+        <div id="first" class="base"></div>
+        <div id="second" class="base"></div>
+        <div id="third" class="base"></div>
+        <div id="home" class="base"></div>
+    </div>
+
+    <div id="pitchZone">
+        <div id="sweetSpot"></div>
+        <div id="marker"></div>
+    </div>
+
+    <button onclick="swing()">スイング！</button>
+
+    <div id="log"></div>
+    <div id="scoreboard">
+        得点: <span id="score">0</span>　
+        アウト: <span id="outs">0</span>
+    </div>
+</div>
+
+<script>
+let marker = document.getElementById("marker");
+let sweetStart = 180;
+let sweetEnd = 220;
+let pos = 0;
+let direction = 1;
+let score = 0;
+let outs = 0;
+let bases = [false,false,false]; // 1,2,3塁
+
+function animate(){
+    pos += direction * 5;
+    if(pos >= 390 || pos <= 0) direction *= -1;
+    marker.style.left = pos + "px";
+    requestAnimationFrame(animate);
+}
+animate();
+
+function swing(){
+    if(outs >= 3){
+        document.getElementById("log").innerText = "チェンジ！リセットします。";
+        resetGame();
+        return;
+    }
+
+    if(pos >= sweetStart && pos <= sweetEnd){
+        let rand = Math.random();
+        if(rand < 0.6){
+            hit(1);
+        }else if(rand < 0.85){
+            hit(2);
+        }else{
+            hit(3);
+        }
+    }else{
+        outs++;
+        document.getElementById("log").innerText = "空振り！アウト！";
+        document.getElementById("outs").innerText = outs;
+    }
+}
+
+function hit(type){
+    document.getElementById("log").innerText = 
+        type===1?"ヒット！":
+        type===2?"ツーベース！":
+        "スリーベース！";
+
+    advanceRunners(type);
+}
+
+function advanceRunners(type){
+    for(let i=2;i>=0;i--){
+        if(bases[i]){
+            if(i+type >=3){
+                score++;
+            }else{
+                bases[i+type] = true;
+            }
+            bases[i]=false;
+        }
+    }
+
+    if(type>=3){
+        score++;
+    }else{
+        bases[type-1]=true;
+    }
+
+    document.getElementById("score").innerText = score;
+}
+
+function resetGame(){
+    score=0;
+    outs=0;
+    bases=[false,false,false];
+    document.getElementById("score").innerText=0;
+    document.getElementById("outs").innerText=0;
+    document.getElementById("log").innerText="";
+}
+</script>
+
+</body>
+</html>
