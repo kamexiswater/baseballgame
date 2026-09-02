@@ -1,332 +1,707 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>野球盤 Ver9.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>白だけオセロ ～白って200色あんねん～</title>
+
 <style>
-body{
-    margin:0;
-    background:#0d1b2a;
-    color:white;
-    text-align:center;
-    font-family:sans-serif;
+* {
+    box-sizing: border-box;
 }
-canvas{
-    background:#2faa2f;
-    margin-top:10px;
-    border:4px solid #ccc;
+
+body {
+    margin: 0;
+    font-family: "Arial", "Hiragino Kaku Gothic ProN", sans-serif;
+    background: linear-gradient(135deg, #f8f8f8, #e8e8e8);
+    color: #222;
+    text-align: center;
 }
-#info{
-    font-size:18px;
-    margin-top:10px;
+
+header {
+    background: #111;
+    color: white;
+    padding: 18px 10px;
+}
+
+h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.subtitle {
+    margin-top: 5px;
+    font-size: 15px;
+}
+
+.game-container {
+    max-width: 850px;
+    margin: 20px auto;
+    padding: 15px;
+}
+
+.info {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 10px 18px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    min-width: 150px;
+}
+
+.card strong {
+    font-size: 22px;
+}
+
+#message {
+    margin: 15px auto;
+    background: white;
+    padding: 14px;
+    border-radius: 10px;
+    max-width: 650px;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.board {
+    width: min(90vw, 600px);
+    height: min(90vw, 600px);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 3px;
+    background: #777;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.cell {
+    background: #4f7c55;
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cell:hover {
+    background: #65966b;
+}
+
+.cell.valid::after {
+    content: "";
+    width: 18%;
+    height: 18%;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50%;
+}
+
+.piece {
+    width: 82%;
+    height: 82%;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.35);
+    box-shadow: 0 3px 5px rgba(0,0,0,0.25);
+    transition: transform 0.25s;
+}
+
+.piece:hover {
+    transform: scale(1.05);
+}
+
+/* プレイヤー1：白の種類 */
+.white-1 {
+    background: #ffffff;
+}
+
+.white-2 {
+    background: #f5f5f5;
+}
+
+.white-3 {
+    background: #eeeeee;
+}
+
+.white-4 {
+    background: #fffdf0;
+}
+
+.white-5 {
+    background: #eaf2f5;
+}
+
+/* プレイヤー2：白の種類 */
+.white-6 {
+    background: #fafafa;
+}
+
+.white-7 {
+    background: #f3f0e8;
+}
+
+.white-8 {
+    background: #e9e9e9;
+}
+
+.white-9 {
+    background: #f8f8f8;
+}
+
+.white-10 {
+    background: #edf1ee;
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+button {
+    border: none;
+    background: #222;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #444;
+}
+
+button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+.legend {
+    margin: 20px auto;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 600px;
+    text-align: left;
+}
+
+.legend h2 {
+    margin-top: 0;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.small-piece {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 1px solid #999;
+}
+
+.special {
+    margin-top: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, #fff, #f0f0f0);
+    border: 2px solid #222;
+    border-radius: 12px;
+}
+
+#specialBtn {
+    background: #111;
+    font-size: 16px;
+}
+
+footer {
+    padding: 20px;
+    font-size: 12px;
+    color: #666;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 22px;
+    }
+
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 </head>
+
 <body>
 
-<h2>トップビュー野球盤 Ver9.0</h2>
-<canvas id="game" width="600" height="700"></canvas>
+<header>
+    <h1>🤍 白だけオセロ 🤍</h1>
+    <div class="subtitle">～ 白って200色あんねん ～</div>
+</header>
 
-<div id="info">
-得点: <span id="score">0</span> |
-ベスト: <span id="best">0</span><br>
-B: <span id="balls">0</span>
-S: <span id="strikes">0</span>
-O: <span id="outs">0</span>
+<div class="game-container">
+
+    <div class="info">
+        <div class="card">
+            プレイヤー1<br>
+            <strong id="score1">2</strong>個
+        </div>
+
+        <div class="card">
+            プレイヤー2<br>
+            <strong id="score2">2</strong>個
+        </div>
+
+        <div class="card">
+            現在のターン<br>
+            <strong id="turn">プレイヤー1</strong>
+        </div>
+    </div>
+
+    <div id="message">
+        白の違いを見極めて戦おう！
+    </div>
+
+    <div id="board" class="board"></div>
+
+    <div class="controls">
+        <button onclick="newGame()">🔄 新しいゲーム</button>
+        <button id="specialBtn" onclick="useSpecial()">
+            ✨ 白って200色あんねん！
+        </button>
+    </div>
+
+    <div class="legend">
+        <h2>🤍 白の種類</h2>
+
+        <div class="legend-grid">
+            <div class="legend-item">
+                <div class="small-piece white-1"></div>
+                純白：1点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-2"></div>
+                乳白：2点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-3"></div>
+                銀白：3点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-4"></div>
+                象牙白：4点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-5"></div>
+                雪白：5点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-6"></div>
+                ミルキーホワイト：2点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-7"></div>
+                ウォームホワイト：3点
+            </div>
+
+            <div class="legend-item">
+                <div class="small-piece white-8"></div>
+                クールホワイト：4点
+            </div>
+        </div>
+
+        <div class="special">
+            <strong>✨ 特殊能力</strong><br><br>
+            ゲーム中1回だけ<br>
+            「白って200色あんねん！」を使用可能。<br>
+            自分の駒を1つ選び、<strong>好きな白</strong>に変更できます。
+        </div>
+    </div>
+
 </div>
 
+<footer>
+    WHITE OTHELLO © 2026
+</footer>
+
 <script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
 
-let score=0;
-let bestScore=0;
+const SIZE = 8;
 
-let balls=0;
-let strikes=0;
-let outs=0;
+let board = [];
+let currentPlayer = 1;
+let specialUsed = false;
 
-let isRightHand=true;
-
-let homePlate={x:300,y:620,size:40};
-let batter={x:260,y:620};
-let pitcher={x:300,y:250};
-
-let fielders=[
- {x:420,y:420},{x:360,y:340},{x:240,y:340},
- {x:180,y:420},{x:520,y:200},{x:300,y:120},{x:80,y:200}
+const directions = [
+    [-1,-1], [-1,0], [-1,1],
+    [0,-1],           [0,1],
+    [1,-1],  [1,0],   [1,1]
 ];
 
-let ball=null;
-let state="wait";
-let batAngle=0;
-let swinging=false;
-let swingProgress=0;
+// 白の種類と得点
+const whiteTypes = {
+    1: { name: "純白", score: 1 },
+    2: { name: "乳白", score: 2 },
+    3: { name: "銀白", score: 3 },
+    4: { name: "象牙白", score: 4 },
+    5: { name: "雪白", score: 5 },
+    6: { name: "ミルキーホワイト", score: 2 },
+    7: { name: "ウォームホワイト", score: 3 },
+    8: { name: "クールホワイト", score: 4 }
+};
 
-let outfieldEvents=[];
+function newGame() {
 
-function generateOutfieldEvents(){
-    outfieldEvents=[];
-    const types=["double","triple","homerun"];
+    board = Array.from(
+        {length: SIZE},
+        () => Array(SIZE).fill(null)
+    );
 
-    // シャッフル
-    types.sort(()=>Math.random()-0.5);
+    currentPlayer = 1;
+    specialUsed = false;
 
-    let zones=[];
-    while(zones.length<3){
-        let r=Math.floor(Math.random()*5);
-        if(!zones.includes(r)) zones.push(r);
-    }
+    // 初期配置
+    board[3][3] = {
+        player: 1,
+        type: 1
+    };
 
-    for(let i=0;i<3;i++){
-        outfieldEvents.push({
-            zone:zones[i],
-            type:types[i]
-        });
-    }
-}
+    board[4][4] = {
+        player: 1,
+        type: 1
+    };
 
-function updateBatterPosition(){
-    batter.x = isRightHand ? homePlate.x-50 : homePlate.x+50;
-    batter.y = homePlate.y;
-}
+    board[3][4] = {
+        player: 2,
+        type: 2
+    };
 
-// ===== 3:1 ピッチ =====
-function newPitch(){
-    let isStrike=Math.random()<0.75;
-    let x;
+    board[4][3] = {
+        player: 2,
+        type: 2
+    };
 
-    if(isStrike){
-        x=homePlate.x+(Math.random()*30-15);
-    }else{
-        x=homePlate.x+(Math.random()*200-100);
-        if(Math.abs(x-homePlate.x)<homePlate.size/2){
-            x+=120;
-        }
-    }
+    document.getElementById("specialBtn").disabled = false;
 
-    ball={x:x,y:300,vx:0,vy:4};
-    state="pitch";
-}
-
-generateOutfieldEvents();
-newPitch();
-
-function draw(){
-    ctx.clearRect(0,0,600,700);
-
-    // ===== 外野イベント可視化 =====
-    let zoneWidth=canvas.width/5;
-    for(let i=0;i<5;i++){
-
-        let event=outfieldEvents.find(e=>e.zone===i);
-
-        if(event){
-            if(event.type==="double") ctx.fillStyle="rgba(0,0,255,0.25)";
-            if(event.type==="triple") ctx.fillStyle="rgba(0,255,0,0.25)";
-            if(event.type==="homerun") ctx.fillStyle="rgba(255,0,0,0.25)";
-        }else{
-            ctx.fillStyle="rgba(255,255,255,0.08)";
-        }
-
-        ctx.fillRect(i*zoneWidth,0,zoneWidth,150);
-        ctx.strokeStyle="rgba(255,255,255,0.3)";
-        ctx.strokeRect(i*zoneWidth,0,zoneWidth,150);
-
-        if(event){
-            ctx.fillStyle="white";
-            ctx.textAlign="center";
-            ctx.fillText(event.type.toUpperCase(), i*zoneWidth+zoneWidth/2, 25);
-        }
-    }
-
-    ctx.fillStyle="#2faa2f";
-    ctx.fillRect(0,150,600,550);
-
-    ctx.fillStyle="white";
-    ctx.save();
-    ctx.translate(homePlate.x,homePlate.y);
-    ctx.rotate(Math.PI/4);
-    ctx.fillRect(-homePlate.size/2,-homePlate.size/2,
-                 homePlate.size,homePlate.size);
-    ctx.restore();
-
-    ctx.fillStyle="blue";
-    ctx.beginPath();
-    ctx.arc(pitcher.x,pitcher.y,15,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.fillStyle="black";
-    ctx.beginPath();
-    ctx.arc(batter.x,batter.y,15,0,Math.PI*2);
-    ctx.fill();
-
-    // バット
-    ctx.save();
-    ctx.translate(batter.x,batter.y);
-    ctx.rotate(batAngle);
-    ctx.fillStyle="brown";
-    ctx.fillRect(0,-4,60,8);
-    ctx.restore();
-
-    ctx.fillStyle="red";
-    fielders.forEach(f=>{
-        ctx.beginPath();
-        ctx.arc(f.x,f.y,12,0,Math.PI*2);
-        ctx.fill();
-    });
-
-    if(ball){
-        ctx.fillStyle="white";
-        ctx.beginPath();
-        ctx.arc(ball.x,ball.y,8,0,Math.PI*2);
-        ctx.fill();
-    }
-}
-
-function update(){
-
-    if(state==="pitch"){
-        ball.y+=ball.vy;
-
-        if(ball.y>=homePlate.y){
-            if(Math.abs(ball.x-homePlate.x)>homePlate.size/2){
-                balls++;
-                if(balls>=4){
-                    score++;
-                    resetCount();
-                    generateOutfieldEvents();
-                }
-            }else{
-                strikes++;
-                if(strikes>=3) addOut();
-            }
-            endPitch();
-        }
-    }
-
-    if(state==="hit"){
-        ball.x+=ball.vx;
-        ball.y+=ball.vy;
-
-        for(let f of fielders){
-            let dx=ball.x-f.x;
-            let dy=ball.y-f.y;
-            if(Math.sqrt(dx*dx+dy*dy)<18){
-                addOut();
-                endPitch();
-                return;
-            }
-        }
-
-        if(ball.y<150){
-            let zoneIndex=Math.floor(ball.x/(canvas.width/5));
-            let found=outfieldEvents.find(e=>e.zone===zoneIndex);
-
-            if(found){
-                if(found.type==="double") score+=2;
-                if(found.type==="triple") score+=3;
-                if(found.type==="homerun") score=score>0?score*2:2;
-            }else{
-                score+=1;
-            }
-
-            if(score>bestScore) bestScore=score;
-
-            resetCount();
-            generateOutfieldEvents();
-            endPitch();
-        }
-    }
-
-    // ===== スイング制御 =====
-    if(swinging){
-
-        if(isRightHand){
-            batAngle += 0.25;
-            swingProgress += 0.25;
-
-            if(swingProgress >= Math.PI*2){
-                swinging=false;
-                swingProgress=0;
-                batAngle=Math.PI;
-            }
-
-        }else{
-            batAngle -= 0.25;
-            swingProgress += 0.25;
-
-            if(swingProgress >= Math.PI){
-                swinging=false;
-                swingProgress=0;
-                batAngle=0;
-            }
-        }
-    }
-}
-
-function swing(){
-    if(state!=="pitch")return;
-
-    swinging=true;
-    swingProgress=0;
-
-    batAngle = isRightHand ? Math.PI : 0;
-
-    if(Math.abs(ball.y-batter.y)<30 &&
-       Math.abs(ball.x-batter.x)<70){
-
-        state="hit";
-        ball.vx=(isRightHand?-5:5);
-        ball.vy=-6;
-    }else{
-        strikes++;
-        if(strikes>=3) addOut();
-        endPitch();
-    }
-}
-
-function addOut(){
-    outs++;
-    resetCount();
-    generateOutfieldEvents();
-    if(outs>=3){
-        score=0;
-        outs=0;
-    }
-}
-
-function resetCount(){
-    balls=0;
-    strikes=0;
-}
-
-function endPitch(){
-    state="wait";
-    ball=null;
-    setTimeout(()=>{newPitch();},3000);
-}
-
-document.addEventListener("keydown",e=>{
-    if(e.code==="Space"||e.code==="Enter"){
-        swing();
-    }
-});
-
-function loop(){
     update();
-    draw();
-    document.getElementById("score").innerText=score;
-    document.getElementById("best").innerText=bestScore;
-    document.getElementById("balls").innerText=balls;
-    document.getElementById("strikes").innerText=strikes;
-    document.getElementById("outs").innerText=outs;
-    requestAnimationFrame(loop);
 }
 
-updateBatterPosition();
-loop();
+function inBoard(r,c) {
+    return r >= 0 && r < SIZE && c >= 0 && c < SIZE;
+}
+
+function getFlips(r,c,player) {
+
+    if (board[r][c] !== null) {
+        return [];
+    }
+
+    const flips = [];
+
+    for (const [dr,dc] of directions) {
+
+        let nr = r + dr;
+        let nc = c + dc;
+        let line = [];
+
+        while (inBoard(nr,nc)) {
+
+            const cell = board[nr][nc];
+
+            if (cell === null) break;
+
+            if (cell.player !== player) {
+                line.push([nr,nc]);
+            } else {
+                if (line.length > 0) {
+                    flips.push(...line);
+                }
+                break;
+            }
+
+            nr += dr;
+            nc += dc;
+        }
+    }
+
+    return flips;
+}
+
+function getValidMoves(player) {
+
+    const moves = [];
+
+    for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+
+            if (getFlips(r,c,player).length > 0) {
+                moves.push([r,c]);
+            }
+
+        }
+    }
+
+    return moves;
+}
+
+function placePiece(r,c) {
+
+    const flips = getFlips(r,c,currentPlayer);
+
+    if (flips.length === 0) return;
+
+    // ランダムな白色を選択
+    const type =
+        1 + Math.floor(Math.random() * 8);
+
+    board[r][c] = {
+        player: currentPlayer,
+        type: type
+    };
+
+    // ひっくり返す
+    for (const [fr,fc] of flips) {
+
+        board[fr][fc].player = currentPlayer;
+
+        // 白の種類も変化
+        board[fr][fc].type =
+            1 + Math.floor(Math.random() * 8);
+    }
+
+    currentPlayer =
+        currentPlayer === 1 ? 2 : 1;
+
+    checkTurn();
+
+    update();
+}
+
+function checkTurn() {
+
+    let moves = getValidMoves(currentPlayer);
+
+    if (moves.length === 0) {
+
+        const other =
+            currentPlayer === 1 ? 2 : 1;
+
+        if (getValidMoves(other).length > 0) {
+
+            currentPlayer = other;
+
+            document.getElementById("message").textContent =
+                "置ける場所がないためパス！";
+
+        } else {
+
+            endGame();
+        }
+    }
+}
+
+function endGame() {
+
+    let score1 = 0;
+    let score2 = 0;
+
+    for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+
+            const cell = board[r][c];
+
+            if (!cell) continue;
+
+            if (cell.player === 1) {
+                score1 += whiteTypes[cell.type].score;
+            } else {
+                score2 += whiteTypes[cell.type].score;
+            }
+        }
+    }
+
+    let result = "";
+
+    if (score1 > score2) {
+        result = "🎉 プレイヤー1の勝利！";
+    } else if (score2 > score1) {
+        result = "🎉 プレイヤー2の勝利！";
+    } else {
+        result = "🤍 引き分け！";
+    }
+
+    document.getElementById("message").textContent =
+        result +
+        `　P1：${score1}点 / P2：${score2}点`;
+}
+
+function useSpecial() {
+
+    if (specialUsed) return;
+
+    const pieces = [];
+
+    for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+
+            if (
+                board[r][c] &&
+                board[r][c].player === currentPlayer
+            ) {
+                pieces.push([r,c]);
+            }
+        }
+    }
+
+    if (pieces.length === 0) return;
+
+    const [r,c] =
+        pieces[Math.floor(Math.random()*pieces.length)];
+
+    // 最高得点の白へ変更
+    board[r][c].type = 5;
+
+    specialUsed = true;
+
+    document.getElementById("specialBtn").disabled = true;
+
+    document.getElementById("message").textContent =
+        "✨「白って200色あんねん！」発動！最高ランクの白に変化！";
+
+    update();
+}
+
+function calculateScores() {
+
+    let count1 = 0;
+    let count2 = 0;
+
+    for (let r=0;r<SIZE;r++) {
+        for (let c=0;c<SIZE;c++) {
+
+            if (!board[r][c]) continue;
+
+            if (board[r][c].player === 1) {
+                count1++;
+            } else {
+                count2++;
+            }
+        }
+    }
+
+    return [count1,count2];
+}
+
+function update() {
+
+    const boardElement =
+        document.getElementById("board");
+
+    boardElement.innerHTML = "";
+
+    const validMoves =
+        getValidMoves(currentPlayer);
+
+    for (let r=0;r<SIZE;r++) {
+
+        for (let c=0;c<SIZE;c++) {
+
+            const cell =
+                document.createElement("div");
+
+            cell.className = "cell";
+
+            if (
+                validMoves.some(
+                    ([mr,mc]) =>
+                    mr === r && mc === c
+                )
+            ) {
+                cell.classList.add("valid");
+            }
+
+            cell.addEventListener(
+                "click",
+                () => placePiece(r,c)
+            );
+
+            if (board[r][c]) {
+
+                const piece =
+                    document.createElement("div");
+
+                piece.className =
+                    "piece white-" +
+                    board[r][c].type;
+
+                piece.title =
+                    whiteTypes[
+                        board[r][c].type
+                    ].name +
+                    " / " +
+                    whiteTypes[
+                        board[r][c].type
+                    ].score +
+                    "点";
+
+                cell.appendChild(piece);
+            }
+
+            boardElement.appendChild(cell);
+        }
+    }
+
+    const [count1,count2] =
+        calculateScores();
+
+    document.getElementById("score1")
+        .textContent = count1;
+
+    document.getElementById("score2")
+        .textContent = count2;
+
+    document.getElementById("turn")
+        .textContent =
+        "プレイヤー" + currentPlayer;
+
+    if (validMoves.length > 0) {
+
+        document.getElementById("message")
+            .textContent =
+            `プレイヤー${currentPlayer}の番。白を見極めて置こう！`;
+    }
+}
+
+newGame();
+
 </script>
 
 </body>
 </html>
+```
